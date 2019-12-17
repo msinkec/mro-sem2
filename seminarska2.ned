@@ -13,7 +13,22 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-network Seminarska1
+import inet.node.rip.RipRouter;
+
+
+network Seminarska1_1
+{
+    @display("bgb=1107,578");
+    submodules:
+    connections:
+}
+network Seminarska1_2
+{
+    @display("bgb=1107,578");
+    submodules:
+    connections:
+}
+network Seminarska1_3
 {
     @display("bgb=1107,578");
     submodules:
