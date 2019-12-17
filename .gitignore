@@ -1,0 +1,7 @@
+out/
+.settings/
+.oppbuildspec
+.cproject
+.project
+seminarska2_dbg
+Makefile
