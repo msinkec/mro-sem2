@@ -1,0 +1,13 @@
+\begin{thebibliography}{1}
+
+\bibitem{cisco}
+Web source.
+\newblock Cisco routers documentation.
+\newblock \url{http://www.cisco.com/}.
+
+\bibitem{omnetpp}
+Web source.
+\newblock Orodje omnet++.
+\newblock \url{http://www.omnetpp.org/}.
+
+\end{thebibliography}
