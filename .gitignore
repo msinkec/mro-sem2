@@ -1,7 +1,10 @@
 out/
+results/
 .settings/
 .oppbuildspec
 .cproject
 .project
+.qtenvrc
 seminarska2_dbg
 Makefile
+seminarska2

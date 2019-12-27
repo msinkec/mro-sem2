@@ -184,7 +184,7 @@ Posamezne naprave nato povežemo z definirano povezavo:
         r1.ethg++ <--> ethernetline <--> r2.ethg++;
         r2.ethg++ <--> ethernetline <--> r3.ethg++;
         r3.ethg++ <--> ethernetline <--> srv.ethg++;
-\begin{lstlisting}
+\end{lstlisting}
 
 Ko simuliramo omrežje se simulira vse od povezavni plasti gor do aplikacijske plasti, tj. od ethernet/PPP okvirjev, do telnet paketov. Pri vizualizaciji seveda vidimo samo okvirje, ker so paketi tudi del teh okvirjev.
 
@@ -193,6 +193,102 @@ Ko simuliramo omrežje se simulira vse od povezavni plasti gor do aplikacijske p
 
 \subsection{Omrežje 2 - IPv6 Bulk Transfer}
 Tukaj piši, Matej, in zavrti kolo.......
+
+
+\section{TODO: Podroben opis gradnikov, ki jih bomo uporabili v naših omrežjih}
+V simulacijah bomo uporabili gradnike iz paketa "inet", ki naj bi služili simulaciji omrežnih naprav iz pravega sveta. V naši nalogo smo se osredotočili na simulacijo IPv6 omrežij.
+
+Naprave v tem paketu so sestavljene iz posameznih komponent, ki so urejeni po TCP/IP slojih.
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{router6.jpg}
+\end{figure}
+
+Zgornji primer prikazuje sestavo naprave "Router6", ki simulira IPv6 usmerjevalnik.
+Čisto spodaj se nahajajo komponente, ki simulirajo delovanje fizične ter povezovalne plasti (skupaj se imenujeta "dostopovna plast"). Ta je sestavljena iz različnih fizičnih vmesnikov, kot so Ethernet, PPP, WLAN, itd..
+Nad tem so komponente za omrežno plast. Ti določajo, katere protokole iz omrežne plasti bo naprava podpirala.
+Potem pride prenosna oz. transportna plast. Tam so komponente, ki določajo podoporo prenosnih protokolov, kot so TCP in UDP.
+Najvišje pa je aplikacijska plast. Tam se nahaja (v odjemalcih in strežnikih) sam simuliran program, kot tudi ostali "sistemski" programi, kot je DHCP strežnik.
+
+V napravi so še razne komponente, ki simulirajo stvari, kot so poraba energije.
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{standardhost6.jpg}
+\end{figure}
+
+To je primer naprave, ki ponazarja navaden računalnik. Naprava je precej podobna usmerjevalniku, le da ji manjkaji stvari, kot so DHCP strežnik, idp.
+Ta naprava se uporabi za simuliranje odjemalcev, prav tako pa tudi za simuliranje strežnikov.
+
+
+\section{Gradnja in simulacija modelov IPv6 omrežij}
+
+\subsection{Omrežje 1}
+V tem omrežju se nahaja strežnik, ki ponuja TCP aplikacijo za prenos vsebin. Ta je povezan na omrežje,
+na katerega so povezavni tudi odjemalci. Eden od odjemalcev je neposredno povezan na strežnik.
+
+Med napravami so posebej konfigurirane povezave. Določljiva je kapaciteta in latenca povezave:
+\begin{lstlisting}
+channel C extends DatarateChannel
+{
+    datarate = 10Mbps;
+    delay = 0.1us;
+}
+\end{lstlisting}
+
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{omrezje1.jpg}
+\end{figure}
+
+Povezave med napravami imajo definirano kapaciteto na 10Mb/s, ter latenco na 0,1μs:
+\begin{lstlisting}
+ channel C extends DatarateChannel
+{
+    datarate = 10Mbps;
+    delay = 0.1us;
+}
+\end{lstlisting}
+
+Program, ki se simulira na odjemalcih se imenuje "TcpSessionApp". S strežnikom sklene povezavo preko TCP vrat 1000. Nato pošlje 1MB podatkov strežniku:
+\begin{lstlisting}[h]
+**.client*.numApps = 1
+**.client*.app[*].typename = "TcpSessionApp"
+**.client*.app[0].active = true
+**.client*.app[0].localAddress = ""
+**.client*.app[0].localPort = -1
+**.client*.app[0].connectAddress = "server"
+**.client*.app[0].connectPort = 1000
+**.client*.app[0].tOpen = 5s
+**.client*.app[0].tSend = 7s
+**.client*.app[0].sendBytes = 1000000B
+**.client*.app[0].sendScript = ""
+**.client*.app[0].tClose = 0s
+
+**.server.numApps = 1
+**.server.app[*].typename = "TcpEchoApp"
+**.server.app[0].localAddress = ""
+**.server.app[0].localPort = 1000
+**.server.app[0].echoFactor = 2.0
+**.server.app[0].echoDelay = 0s
+\end{lstlisting}
+
+Čakalna vrsta na usmerjevalnikih ima kapaciteto 10 ethernet okvirjev. Ob primeru da je polna, zavrže novo prispele okvirje:
+\begin{lstlisting}[h]
+**.eth[*].queue.typename = "EtherQosQueue"
+**.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
+**.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
+**.eth[*].mac.duplexMode = true
+\end{lstlisting}
+
+V tem omrežju sta ključna količina prenešenih podatkov in kapaciteta povezave med odjemalcem in strežnikom. Ta dva parametra določita čas prenosa podatkov:
+$čas = količina podatkov / hitrost prenosa$
+
+V zgornjem primeru se prenese 1MB = 8Mb podatkov preko 10Mb/s povezave, torej bo prenos trajal približno 0,8s. Dejanski čas bo verjetno višji zaradi latenc in kontrolnih okvirjev, ki se morajo prenašat po povezavah.
+Zraven pa še pride čas prebivanja v usmerjevalnikih.
+To drži ob primeru, da samo en odjemalec prenaša po neki povezavi. Pri večih vzporednih prenosih se čas temu sorazmerno poveča.
+
+# TODO: izmeri čas prenosa
+
 
 
 \end{document}
