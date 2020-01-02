@@ -12,11 +12,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
+package inet.examples.mrosem2;
 
+import inet.examples.wireless.throughput.WirelessAPWithSink;
 import inet.node.ethernet.EtherSwitch;
 import inet.networklayer.configurator.ipv6.Ipv6FlatNetworkConfigurator;
 import inet.node.ipv6.Router6;
 import inet.node.ipv6.StandardHost6;
+import inet.node.xmipv6.WirelessHost6;
 import ned.DatarateChannel;
 
 
@@ -86,23 +89,38 @@ network Seminarska1_1
 network Seminarska1_2
 {
     @display("bgb=1107,578");
-    submodules:
-        etherSwitch: EtherSwitch {
-            @display("p=544.38995,362.46375");
+    types:
+        channel C extends DatarateChannel
+        {
+            datarate = 10Mbps;
+            delay = 0.1us;
         }
-        router6: Router6 {
-            @display("p=409.68124,241.64249");
+    submodules:
+        client1: StandardHost6 {
+            @display("p=674.9325,154.15125");
+        }
+        client2: StandardHost6 {
+            @display("p=266.63998,159.70624");
+        }
+        client3: StandardHost6 {
+            @display("p=498.56122,422.18");
         }
         router1: Router6 {
-            @display("p=692.9862,241.64249");
+            @display("p=498.56122,158.31749");
         }
-        cli[n]: StandardHost6 {
-            @display("p=543.0012,504.11624,col,100");
+        router2: Router6 {
+            @display("p=595.77374,287.47125");
         }
-        srv: StandardHost6 {
-            @display("p=409.68124,40.27375");
+        router4: Router6 {
+            @display("p=377.74,287.47125");
         }
     connections:
+        client1.ethg++ <--> C <--> router1.ethg++;
+        client1.ethg++ <--> C <--> router2.ethg++;
+        client2.ethg++ <--> C <--> router4.ethg++;
+        client2.ethg++ <--> C <--> router1.ethg++;
+        client3.ethg++ <--> C <--> router2.ethg++;
+        client3.ethg++ <--> C <--> router4.ethg++;
 }
 network Seminarska1_3
 {
