@@ -192,8 +192,14 @@ Ko simuliramo omrežje se simulira vse od povezavni plasti gor do aplikacijske p
 
 
 \subsection{Omrežje 2 - IPv6 Bulk Transfer}
-Tukaj piši, Matej, in zavrti kolo.......
+Omrežje je sestavljeno iz 3h odjemalcev in enega serverja, ter ruterja ki jih povezuje. Odjemalci dostopajo do serverja, kamor pošiljajo pakete, on pa jih takoj pošlje nazaj na isti port. Konfiguracija je zelo podobna prejšnjemu omrežju.
+Strežnik in odjemalci so povezani z kanalom s hitrostjo 10Mb/s in zakasnitvijo 1 mikro sekunda. Omrežje ni dodelano do konca, kakor tudi piše v redme datoteki.
 
+Slika omrežja:
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{clusterFrick.jpg}
+\end{figure}
 
 \section{TODO: Podroben opis gradnikov, ki jih bomo uporabili v naših omrežjih}
 V simulacijah bomo uporabili gradnike iz paketa "inet", ki naj bi služili simulaciji omrežnih naprav iz pravega sveta. V naši nalogo smo se osredotočili na simulacijo IPv6 omrežij.
