@@ -122,7 +122,32 @@ network Seminarska1_2
 }
 network Seminarska1_3
 {
-    @display("bgb=1107,578");
+    parameters:
+        int n;
+        @display("bgb=1107");
+    types:
+        channel C extends DatarateChannel
+        {
+            delay = 0.1us;
+            datarate = 10Mbps;
+        }
     submodules:
+        router: Router6 {
+            @display("p=534.66876,272.19498");
+        }
+        srv: StandardHost6 {
+            @display("p=243.03123,270.80624");
+        }
+        cli[n]: StandardHost6 {
+        @display("p=773.53375,143.04124,col,60");
+        }
+        configurator: Ipv6FlatNetworkConfigurator {
+            parameters:
+                @display("p=100,100;is=s");
+        }
     connections:
+        srv.ethg++ <--> C <--> router.ethg++;
+        for i=0..n-1 {
+            cli[i].ethg++ <--> C <--> router.ethg++;
+        }
 }
