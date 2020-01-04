@@ -12,8 +12,6 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
-package inet.examples.mrosem2;
-
 import inet.examples.wireless.throughput.WirelessAPWithSink;
 import inet.node.ethernet.EtherSwitch;
 import inet.networklayer.configurator.ipv6.Ipv6FlatNetworkConfigurator;
