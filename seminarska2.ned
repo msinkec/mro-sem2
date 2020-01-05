@@ -112,6 +112,10 @@ network Seminarska1_2
         router3: Router6 {
             @display("p=377.74,287.47125");
         }
+        configurator: Ipv6FlatNetworkConfigurator {
+            parameters:
+                @display("p=100,100;is=s");
+        }
     connections:
         client1.ethg++ <--> C <--> router1.ethg++;
         client2.ethg++ <--> C <--> router2.ethg++;
