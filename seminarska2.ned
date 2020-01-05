@@ -95,13 +95,13 @@ network Seminarska1_2
         }
     submodules:
         client1: StandardHost6 {
-            @display("p=674.9325,154.15125");
+            @display("p=498.56122,52.7725");
         }
         client2: StandardHost6 {
-            @display("p=266.63998,159.70624");
+            @display("p=738.815,404.12625");
         }
         client3: StandardHost6 {
-            @display("p=498.56122,422.18");
+            @display("p=266.63998,404.12625");
         }
         router1: Router6 {
             @display("p=498.56122,158.31749");
@@ -109,16 +109,16 @@ network Seminarska1_2
         router2: Router6 {
             @display("p=595.77374,287.47125");
         }
-        router4: Router6 {
+        router3: Router6 {
             @display("p=377.74,287.47125");
         }
     connections:
         client1.ethg++ <--> C <--> router1.ethg++;
-        client1.ethg++ <--> C <--> router2.ethg++;
-        client2.ethg++ <--> C <--> router4.ethg++;
-        client2.ethg++ <--> C <--> router1.ethg++;
-        client3.ethg++ <--> C <--> router2.ethg++;
-        client3.ethg++ <--> C <--> router4.ethg++;
+        client2.ethg++ <--> C <--> router2.ethg++;
+        client3.ethg++ <--> C <--> router3.ethg++;
+        router1.ethg++ <--> C <--> router2.ethg++;
+        router2.ethg++ <--> C <--> router3.ethg++;
+        router3.ethg++ <--> C <--> router1.ethg++;
 }
 network Seminarska1_3
 {
@@ -139,7 +139,7 @@ network Seminarska1_3
             @display("p=243.03123,270.80624");
         }
         cli[n]: StandardHost6 {
-        @display("p=773.53375,143.04124,col,60");
+            @display("p=773.53375,143.04124,col,60");
         }
         configurator: Ipv6FlatNetworkConfigurator {
             parameters:
