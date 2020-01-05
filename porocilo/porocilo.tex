@@ -340,6 +340,7 @@ channel C extends DatarateChannel
 \end{figure}
 
 Povezave med napravami imajo definirano kapaciteto na 10Mb/s, ter latenco na 0,1μs:
+Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1μs.
 \begin{lstlisting}
  channel C extends DatarateChannel
 {
@@ -386,7 +387,59 @@ V zgornjem primeru se prenese 1MB = 8Mb podatkov preko 10Mb/s povezave, torej bo
 Zraven pa še pride čas prebivanja v usmerjevalnikih.
 To drži ob primeru, da samo en odjemalec prenaša po neki povezavi. Pri večih vzporednih prenosih se čas temu sorazmerno poveča.
 
-# TODO: izmeri čas prenosa
+\subsection{Omrežje 2}
+V tem omrežju je pokazana Peer to Peer omrežje med tremi računalniki in prenos podatkov skozi le to omrežje. 
+
+Med napravami so posebej konfigurirane povezave. Določljiva je kapaciteta in latenca povezave:
+Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1μs.
+
+\begin{lstlisting}
+channel C extends DatarateChannel
+{
+    datarate = 10Mbps;
+    delay = 0.1us;
+}
+\end{lstlisting}
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{omrezje2.jpg}
+\end{figure}
+
+Programa, ki se simulirata na odjemalcij sta "TcpSessionApp" in "TcpEchoApp". Med seboj so povezani preko porta 1001 in si pošiljajo TCP paketke velikosti 10MB.
+
+\begin{lstlisting}[h]
+**.client*.numApps = 2
+**.client*.app[0].typename = "TcpSessionApp"
+**.client*.app[0].localPort = 1001
+**.client*.app[0].active = true
+**.client*.app[0].localAddress = ""
+**.client*.app[0].tOpen = 5s
+**.client*.app[0].tSend = 7s
+**.client*.app[0].sendBytes = 10000B
+**.client*.app[0].sendScript = ""
+**.client*.app[0].tClose = 51day
+**.client1.app[0].connectAddress = "client2"
+**.client2.app[0].connectAddress = "client3"
+**.client3.app[0].connectAddress = "client1"
+**.client*.app[0].connectPort = 1000
+
+**.client*.app[1].typename = "TcpEchoApp"
+**.client*.app[1].active = true
+**.client*.app[1].localPort = 1000
+**.client*.app[1].echoFactor = 2.0
+**.client*.app[1].echoDelay = 0
+**.client*.app[1].localAddress = ""
+\end{lstlisting}
+
+Čakalna vrsta na usmerjevalnikih ima kapaciteto 10 ethernet okvirjev. Ob primeru da je polna, zavrže novo prispele okvirje:
+\begin{lstlisting}[h]
+**.eth[*].queue.typename = "EtherQosQueue"
+**.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
+**.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
+**.eth[*].mac.duplexMode = true
+\end{lstlisting}
+
+V tem omrežju je bottleneck povezava med vsmerjevalniki, saj so povezani ciklično, predvidevam, da bo to vzelo največ časa.
 
 
 
