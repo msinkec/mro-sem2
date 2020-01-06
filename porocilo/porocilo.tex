@@ -198,7 +198,7 @@ Strežnik in odjemalci so povezani z kanalom s hitrostjo 10Mb/s in zakasnitvijo 
 Slika omrežja:
 
 \begin{figure}[h]
-  \includegraphics[width=\linewidth]{clusterFrick.jpg}
+  \includegraphics[width=\linewidth]{ipv6bulktransfer.jpg}
 \end{figure}
 
 
@@ -246,8 +246,6 @@ Nastavimo lahko tudi posebna vrata. Strežniku lahko nastavimo hitrost generiran
 **.cli[*].app[0].reconnectInterval = 30s
 \end{lstlisting}
 
-#TODO: Opiši vrednosti
-
 Podobno je možno konfigurirati aplikacije, ki tečejo na strežniku:
 \begin{lstlisting}
 **.srv[*].numApps = 1
@@ -257,7 +255,6 @@ Podobno je možno konfigurirati aplikacije, ki tečejo na strežniku:
 **.srv[*].app[0].replyDelay = 0s
 \end{lstlisting}
 
-#TODO: Opiši vrednosti
 
 Nastaviti je potrebno tudi omrežne vmesnike (NIC) na napravah:
 \begin{lstlisting}
@@ -268,7 +265,6 @@ Nastaviti je potrebno tudi omrežne vmesnike (NIC) na napravah:
 **.eth[*].mac.duplexMode = true
 \end{lstlisting}
 
-#TODO: Opiši vrednosti
 
 Protokol pošiljanja spreminjamo v .ned datoteki. Tu definiramo tudi hitrost prenosa in latenco.
 
@@ -294,7 +290,7 @@ Posamezne naprave nato povežemo z definirano povezavo:
 Pri simulaciji se simulirajo plasti tcp/ip modela od druge navzgor. V simulaciji pa vidimo samo okvirje.
 
 
-\section{TODO: Podroben opis gradnikov, ki jih bomo uporabili v naših omrežjih}
+\section{Podroben opis gradnikov, ki jih bomo uporabili v naših omrežjih}
 V simulacijah bomo uporabili gradnike iz paketa "inet", ki naj bi služili simulaciji omrežnih naprav iz pravega sveta. V naši nalogo smo se osredotočili na simulacijo IPv6 omrežij.
 
 Naprave v tem paketu so sestavljene iz posameznih komponent, ki so urejeni po TCP/IP slojih.
@@ -339,8 +335,8 @@ channel C extends DatarateChannel
   \includegraphics[width=\linewidth]{omrezje1.jpg}
 \end{figure}
 
-Povezave med napravami imajo definirano kapaciteto na 10Mb/s, ter latenco na 0,1μs:
-Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1μs.
+Povezave med napravami imajo definirano kapaciteto na 10Mb/s, ter latenco na 0,1us:
+Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1us.
 \begin{lstlisting}
  channel C extends DatarateChannel
 {
@@ -350,7 +346,8 @@ Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1μs.
 \end{lstlisting}
 
 Program, ki se simulira na odjemalcih se imenuje "TcpSessionApp". S strežnikom sklene povezavo preko TCP vrat 1000. Nato pošlje 1MB podatkov strežniku:
-\begin{lstlisting}[h]
+
+\begin{lstlisting}
 **.client*.numApps = 1
 **.client*.app[*].typename = "TcpSessionApp"
 **.client*.app[0].active = true
@@ -373,7 +370,8 @@ Program, ki se simulira na odjemalcih se imenuje "TcpSessionApp". S strežnikom 
 \end{lstlisting}
 
 Čakalna vrsta na usmerjevalnikih ima kapaciteto 10 ethernet okvirjev. Ob primeru da je polna, zavrže novo prispele okvirje:
-\begin{lstlisting}[h]
+
+\begin{lstlisting}
 **.eth[*].queue.typename = "EtherQosQueue"
 **.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
 **.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
@@ -387,11 +385,114 @@ V zgornjem primeru se prenese 1MB = 8Mb podatkov preko 10Mb/s povezave, torej bo
 Zraven pa še pride čas prebivanja v usmerjevalnikih.
 To drži ob primeru, da samo en odjemalec prenaša po neki povezavi. Pri večih vzporednih prenosih se čas temu sorazmerno poveča.
 
+\subsubsection{Analiza simulacije}
+
+Konfiguracija simulacije je sledeča:
+
+\begin{lstlisting}
+network = Seminarska1_1
+sim-time-limit = 1000s
+
+**.client*.numApps = 1
+**.client*.app[*].typename = "TcpSessionApp"
+**.client*.app[0].active = true
+**.client*.app[0].localAddress = ""
+**.client*.app[0].localPort = -1
+
+**.client*.app[0].connectAddress = "server"
+**.client*.app[0].connectPort = 1000
+**.client*.app[0].tOpen = 5s
+**.client*.app[0].tSend = 7s
+**.client*.app[0].sendBytes = 1MB
+**.client*.app[0].sendScript = ""
+**.client*.app[0].tClose = 1001s
+
+**.server.numApps = 1
+**.server.app[*].typename = "TcpEchoApp"
+**.server.app[0].localAddress = """
+**.server.app[0].localPort = 1000
+**.server.app[0].echoFactor = 2.0
+**.server.app[0].echoDelay = 0s
+
+# NIC configuration
+**.ppp[*].queue.typename = "DropTailQueue" # in routers
+**.ppp[*].queue.frameCapacity = 10  # in routers
+
+**.eth[*].queue.typename = "EtherQosQueue"
+**.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
+**.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
+**.eth[*].mac.duplexMode = true
+
+**.router1.hasTcp = false
+**.router1.hasUdp = false
+
+**.router2.hasTcp = false
+**.router2.hasUdp = false
+\end{lstlisting}
+
+V tej simulaciji odjemalci vpostavjo TCP povezavo s strežnikom ob simulacijskem času 5s. Pri 7s se začne pošiljanje podatkov strežniku. Vsak odjemalec pošlje 1M podatkov strežniku, ta pa hkrati vrača ene in iste podatke posameznemu odjemalcu, torej tudi 1M.
+
+Simulacijo smo zaključili po 60s.
+
+Nato smo izvozili zajeto statistiko v JSON format, ter ga nato podrobneje analizirali s pomočjo Pythona.
+
+Število paketov v čakalnih vrstah posameznega Ethernet vmesnika skozi čas:
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{queuelen-1.jpg}
+\end{figure}
+
+Število paketov, ki so jih obdelali usmerjevalniki:
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{nrpackets-1-router1.jpg}
+\end{figure}
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{nrpackets-1-router2.jpg}
+\end{figure}
+
+Število bytov, ki so jih obdelali usmerjevalniki:
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{nrbytes-1-router1.jpg}
+\end{figure}
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{nrbytes-1-router2.jpg}
+\end{figure}
+
+Čas paketa v čakalni vrsti usmerjevalnikov:
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{queuetime-1-router1.jpg}
+\end{figure}
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{queuetime-1-router2.jpg}
+\end{figure}
+
+Število nepotrjenih TCP paketov:
+
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{queuelen-1.jpg}
+\end{figure}
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{queuelen-1.jpg}
+\end{figure}
+
+
+
+
+
+
 \subsection{Omrežje 2}
 V tem omrežju je pokazana Peer to Peer omrežje med tremi računalniki in prenos podatkov skozi le to omrežje. 
 
 Med napravami so posebej konfigurirane povezave. Določljiva je kapaciteta in latenca povezave:
-Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1μs.
+Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1us.
 
 \begin{lstlisting}
 channel C extends DatarateChannel
@@ -407,7 +508,7 @@ channel C extends DatarateChannel
 
 Programa, ki se simulirata na odjemalcij sta "TcpSessionApp" in "TcpEchoApp". Med seboj so povezani preko porta 1001 in si pošiljajo TCP paketke velikosti 10MB.
 
-\begin{lstlisting}[h]
+\begin{lstlisting}
 **.client*.numApps = 2
 **.client*.app[0].typename = "TcpSessionApp"
 **.client*.app[0].localPort = 1001
@@ -432,7 +533,7 @@ Programa, ki se simulirata na odjemalcij sta "TcpSessionApp" in "TcpEchoApp". Me
 \end{lstlisting}
 
 Čakalna vrsta na usmerjevalnikih ima kapaciteto 10 ethernet okvirjev. Ob primeru da je polna, zavrže novo prispele okvirje:
-\begin{lstlisting}[h]
+\begin{lstlisting}
 **.eth[*].queue.typename = "EtherQosQueue"
 **.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
 **.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
@@ -442,13 +543,69 @@ Programa, ki se simulirata na odjemalcij sta "TcpSessionApp" in "TcpEchoApp". Me
 V tem omrežju je bottleneck povezava med vsmerjevalniki, saj so povezani ciklično, predvidevam, da bo to vzelo največ časa.
 
 
+\subsubsection{Analiza simulacije}
+
+Konfiguracija simulacije:
+
+\begin{lstlisting}
+network = Seminarska1_2
+sim-time-limit = 50day
+
+# tcp apps
+**.client*.numApps = 2
+**.client*.app[1].typename = "TcpSessionApp"
+**.client*.app[1].connectPort = 1000
+**.client*.app[1].localPort = 1001
+**.client*.app[1].active = true
+**.client*.app[1].localAddress = ""
+**.client*.app[1].tOpen = 5s
+**.client*.app[1].tSend = 7s
+**.client*.app[1].sendBytes = 1000000B
+**.client*.app[1].sendScript = ""
+**.client*.app[1].tClose = 51day
+
+**.client*.app[0].typename = "TcpEchoApp"
+**.client*.app[0].localPort = 1000
+**.client*.app[0].echoFactor = 2.0
+**.client*.app[0].echoDelay = 0s
+**.client*.app[0].localAddress = ""
+
+**.client1.app[1].connectAddress = "client2"
+**.client2.app[1].connectAddress = "client3"
+**.client3.app[1].connectAddress = "client1"
+
+# NIC configuration
+**.ppp[*].queue.typename = "DropTailQueue" # in routers
+**.ppp[*].queue.frameCapacity = 10  # in routers
+
+**.eth[*].queue.typename = "EtherQosQueue"
+**.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
+**.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
+**.eth[*].mac.duplexMode = true
+
+**.router1.hasTcp = false
+**.router1.hasUdp = false
+
+**.router2.hasTcp = false
+**.router2.hasUdp = false
+\end{lstlisting}
+
+Vsak odjemalec naslednjemu pošlje po 1MB podatkov, od drugega odjemalca pa prejme 1MB in mu jih sproti vrača. Povezava se vzpostavi pri 5ih sekundah, podatki pa se začnejo prenašat pri 7s.
+
+Simulacijo smo ugasnili po 60s.
+
+
+
+
+
+
 
 \subsection{Omrežje 3}
 V tem omrežju je prikazana topologija zvezda. Uporablja se en strežnik, ki ponuja TCP aplikacijo za prenos vsebin. Ta je povezan na omrežje,
 na katerega je povezanih n odjemalcev. Vse naprave so med seboj povezane preko usmerjevalnika.
 
 Med napravami so posebej konfigurirane povezave. Določljiva je kapaciteta in latenca povezave:
-Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1μs.
+Kapaciteta povezave je definirana z 10 Mb/s, latenca pa z 0,1us.
 \begin{lstlisting}
 channel C extends DatarateChannel
 {
@@ -462,7 +619,7 @@ channel C extends DatarateChannel
 \end{figure}
 
 Program, ki se simulira na n odjemalcih se imenuje "TcpSessionApp". S strežnikom sklene povezavo preko TCP vrat 1000. Nato pošlje 1MB podatkov strežniku:
-\begin{lstlisting}[h]
+\begin{lstlisting}
 *.n = 15
 
 **.cli[*].numApps = 1
@@ -488,7 +645,7 @@ Program, ki se simulira na n odjemalcih se imenuje "TcpSessionApp". S strežniko
 \end{lstlisting}
 
 Čakalna vrsta na usmerjevalnikih ima kapaciteto 10 ethernet okvirjev. Ob primeru da je polna, zavrže novo prispele okvirje:
-\begin{lstlisting}[h]
+\begin{lstlisting}
 **.eth[*].queue.typename = "EtherQosQueue"
 **.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
 **.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
@@ -502,7 +659,124 @@ V zgornjem primeru se prenese 1 MB = 8 Mb podatkov preko 10 Mb/s povezave, torej
 Poleg tega pa pride še čas prebivanja v usmerjevalniku. Tu se lahko pojavi problem, ker vse naprave komunicirajo preko enega usmerjevalnika.
 Pri večjem številu paketov se časi tudi povečajo.
 
-# TODO: izmeri čas prenosa
+
+\subsubsection{Analiza simulacije}
+
+Konfiguracija simulacije:
+
+\begin{lstlisting}
+network = Seminarska1_3
+sim-time-limit = 50day
+*.n = 15
+
+# tcp apps
+**.cli[*].numApps = 1
+**.cli[*].app[*].typename = "TcpSessionApp"
+**.cli[*].app[0].active = true
+**.cli[*].app[0].localAddress = ""
+**.cli[*].app[0].localPort = -1
+
+**.cli[*].app[0].connectAddress = "srv"
+**.cli[*].app[0].connectPort = 1000
+**.cli[*].app[0].tOpen = 5s
+**.cli[*].app[0].tSend = 7s
+**.cli[*].app[0].sendBytes = 1000B
+**.cli[*].app[0].sendScript = ""
+**.cli[*].app[0].tClose = 20s
+
+**.srv.numApps = 1
+**.srv.app[*].typename = "TcpEchoApp"
+**.srv.app[0].localAddress = ""
+**.srv.app[0].localPort = 1000
+**.srv.app[0].echoFactor = 2.0
+**.srv.app[0].echoDelay = 0s
+
+**.eth[*].queue.typename = "EtherQosQueue"
+**.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
+**.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
+**.eth[*].mac.duplexMode = true
+
+**.router.hasTcp = false
+**.router.hasUdp = false
+
+\end{lstlisting}
+
+Vsak odjemalec naslednjemu pošlje po 1MB podatkov, od drugega odjemalca pa prejme 1MB in mu jih sproti vrača. Povezava se vzpostavi pri 5ih sekundah, podatki pa se začnejo prenašat pri 7s.
+
+Simulacijo smo ugasnili po 60s.
+
+
+\subsection{Omrežje 4}
+V tem omrežju je prikazana različica demonetworketh, kjer je usmerjevalnikov ravno toliko kot strežnikov/odjemalcev. Naprave so povezane tako: vsak par strežnika in odjemalca je povezan na svoj usmerjevalnik; usmerjevalniki pa so povezani med seboj v kačo. Število "n" se lahko spreminja, ponastavljeno pa je na n=2. Vsi strežniki uporabljajo TCP aplikacijo za prenos vsebin in komunicirajo vsak s svojim odjemalcem. Topologija izgleda kot nekakšen pajek.
+
+Povezave so med vsemi napravami enake in njihova implementacija izgleda tako:
+\begin{lstlisting}
+channel C extends DatarateChannel
+{
+    datarate = 10Mbps;
+    delay = 0.1us;
+}
+\end{lstlisting}
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{omrezje4.png}
+\end{figure}
+
+Za lepšo predstavitev, ker omnetpp usmerjevalnikov noče narisati pravilno še spodnja slika, ki prikazuje omrežje pri paramteru n=2.
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{omrezje4_n_eq_2.png}
+\end{figure}
+
+Program, ki se simulira na n odjemalcih se imenuje "TcpSessionApp". S strežniki sklenejo povezavo preko TCP vrat 1000. Nato pošljejo 10MB podatkov:
+\begin{lstlisting}[h]
+#number of clients, servers; default = 2
+*.n = 5
+
+# tcp apps
+**.cli[*].numApps = 1
+**.cli[*].app[*].typename = "TcpSessionApp"
+**.cli[*].app[0].localAddress = ""
+**.cli[*].app[0].localPort = 1000
+
+#when changing *.n comment or uncomment or add below
+**.cli[0].app[0].connectAddress = "srv[0]"
+**.cli[1].app[0].connectAddress = "srv[1]"
+**.cli[2].app[0].connectAddress = "srv[2]"
+**.cli[3].app[0].connectAddress = "srv[3]"
+**.cli[4].app[0].connectAddress = "srv[4]"
+
+**.cli[*].app[0].connectPort = 1000
+**.cli[*].app[0].tOpen = 5s
+**.cli[*].app[0].tSend = 7s
+**.cli[*].app[0].sendBytes = 10MB
+**.cli[*].app[0].sendScript = ""
+**.cli[*].app[0].tClose = 20s
+
+**.srv[*].numApps = 1
+**.srv[*].app[*].typename = "TcpEchoApp"
+**.srv[*].app[0].localAddress = ""
+**.srv[*].app[0].localPort = 1000
+**.srv[*].app[0].echoFactor = 2.0
+**.srv[*].app[0].echoDelay = 0s
+\end{lstlisting}
+
+Čakalna vrsta na usmerjevalnikih ima kapaciteto 10 ethernet okvirjev. Ob primeru da je polna, zavrže novo prispele okvirje:
+\begin{lstlisting}[h]
+**.eth[*].queue.typename = "EtherQosQueue"
+**.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
+**.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
+**.eth[*].mac.duplexMode = true
+\end{lstlisting}
+
+\subsubsection{Analiza simulacije}
+
+Konfiguracija simulacije:
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
 
 
 
