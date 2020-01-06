@@ -436,58 +436,21 @@ Simulacijo smo zaključili po 60s.
 
 Nato smo izvozili zajeto statistiko v JSON format, ter ga nato podrobneje analizirali s pomočjo Pythona.
 
-Število paketov v čakalnih vrstah posameznega Ethernet vmesnika skozi čas:
+Ključen v tem omrežju je usmerjevalnik 1, skozi katerega grejo vsi poslani podatki.
 
+Število paketov v čakalnih vrstah posameznega Ethernet vmesnikov na usmerjevalniku skozi čas:
 \begin{figure}[h]
-  \includegraphics[width=\linewidth]{queuelen-1.jpg}
+  \includegraphics[width=\linewidth]{queuelength-1.png}
 \end{figure}
+
+\pagebreak
 
 Število paketov, ki so jih obdelali usmerjevalniki:
-
 \begin{figure}[h]
-  \includegraphics[width=\linewidth]{nrpackets-1-router1.jpg}
+  \includegraphics[width=\linewidth]{packets-1.png}
 \end{figure}
 
-\begin{figure}[h]
-  \includegraphics[width=\linewidth]{nrpackets-1-router2.jpg}
-\end{figure}
-
-Število bytov, ki so jih obdelali usmerjevalniki:
-
-\begin{figure}[h]
-  \includegraphics[width=\linewidth]{nrbytes-1-router1.jpg}
-\end{figure}
-
-\begin{figure}[h]
-  \includegraphics[width=\linewidth]{nrbytes-1-router2.jpg}
-\end{figure}
-
-Čas paketa v čakalni vrsti usmerjevalnikov:
-
-\begin{figure}[h]
-  \includegraphics[width=\linewidth]{queuetime-1-router1.jpg}
-\end{figure}
-
-\begin{figure}[h]
-  \includegraphics[width=\linewidth]{queuetime-1-router2.jpg}
-\end{figure}
-
-Število nepotrjenih TCP paketov:
-
-
-\begin{figure}[h]
-  \includegraphics[width=\linewidth]{queuelen-1.jpg}
-\end{figure}
-
-\begin{figure}[h]
-  \includegraphics[width=\linewidth]{queuelen-1.jpg}
-\end{figure}
-
-
-
-
-
-
+\pagebreak
 \subsection{Omrežje 2}
 V tem omrežju je pokazana Peer to Peer omrežje med tremi računalniki in prenos podatkov skozi le to omrežje. 
 
@@ -594,7 +557,19 @@ Vsak odjemalec naslednjemu pošlje po 1MB podatkov, od drugega odjemalca pa prej
 
 Simulacijo smo ugasnili po 60s.
 
+Število paketov v čakalnih vrstah posameznega Ethernet vmesnikov na usmerjevalniku skozi čas:
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{queuelength-2.png}
+\end{figure}
 
+\pagebreak
+
+Število paketov, ki so jih obdelali usmerjevalniki:
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{packets-2.png}
+\end{figure}
+
+\pagebreak
 
 
 
@@ -705,6 +680,20 @@ Vsak odjemalec naslednjemu pošlje po 1MB podatkov, od drugega odjemalca pa prej
 
 Simulacijo smo ugasnili po 60s.
 
+Število paketov v čakalnih vrstah posameznega Ethernet vmesnikov na usmerjevalniku skozi čas:
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{queuelength-3.png}
+\end{figure}
+
+\pagebreak
+
+Število paketov, ki so jih obdelali usmerjevalniki:
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{packets-3.png}
+\end{figure}
+
+\pagebreak
+
 
 \subsection{Omrežje 4}
 V tem omrežju je prikazana različica demonetworketh, kjer je usmerjevalnikov ravno toliko kot strežnikov/odjemalcev. Naprave so povezane tako: vsak par strežnika in odjemalca je povezan na svoj usmerjevalnik; usmerjevalniki pa so povezani med seboj v kačo. Število "n" se lahko spreminja, ponastavljeno pa je na n=2. Vsi strežniki uporabljajo TCP aplikacijo za prenos vsebin in komunicirajo vsak s svojim odjemalcem. Topologija izgleda kot nekakšen pajek.
@@ -729,7 +718,7 @@ Za lepšo predstavitev, ker omnetpp usmerjevalnikov noče narisati pravilno še 
 \end{figure}
 
 Program, ki se simulira na n odjemalcih se imenuje "TcpSessionApp". S strežniki sklenejo povezavo preko TCP vrat 1000. Nato pošljejo 10MB podatkov:
-\begin{lstlisting}[h]
+\begin{lstlisting}
 #number of clients, servers; default = 2
 *.n = 5
 
@@ -762,23 +751,72 @@ Program, ki se simulira na n odjemalcih se imenuje "TcpSessionApp". S strežniki
 \end{lstlisting}
 
 Čakalna vrsta na usmerjevalnikih ima kapaciteto 10 ethernet okvirjev. Ob primeru da je polna, zavrže novo prispele okvirje:
-\begin{lstlisting}[h]
+\begin{lstlisting}
 **.eth[*].queue.typename = "EtherQosQueue"
 **.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
 **.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
 **.eth[*].mac.duplexMode = true
 \end{lstlisting}
 
+
 \subsubsection{Analiza simulacije}
 
 Konfiguracija simulacije:
 
 \begin{lstlisting}
+network = Seminarska1_4
+sim-time-limit = 50day
 
+*.c = 5
+
+*.r = 5 
+
+# tcp apps
+**.clients[*].numApps = 1
+**.clients[*].app[*].typename = "TcpSessionApp"
+**.clients[*].app[0].active = true
+**.clients[*].app[0].localAddress = ""
+**.clients[*].app[0].localPort = -1
+
+**.clients[*].app[0].connectAddress = "server"
+**.clients[*].app[0].connectPort = 1000
+**.clients[*].app[0].tOpen = 5s
+**.clients[*].app[0].tSend = 7s
+**.clients[*].app[0].sendBytes = 1MB
+**.clients[*].app[0].sendScript = ""
+**.clients[*].app[0].tClose = 20s
+
+**.server.numApps = 1
+#**.server.app[*].typename="TcpSinkApp"
+**.server.app[*].typename = "TcpEchoApp"
+**.server.app[0].localAddress = ""
+**.server.app[0].localPort = 1000
+**.server.app[0].echoFactor = 2.0
+**.server.app[0].echoDelay = 0s
+
+**.ppp[*].queue.dataQueue.typename = "DropTailQueue" # in routers
+
+**.router*.hasTcp = false
+**.router*.hasUdp = false
 \end{lstlisting}
 
+Vsak odjemalec pošilje 1MB podatkov izbranemu strežniku, ki mu jih nato vrača.  TCP povezave se sklenejo ob 5s, podatki se pa začnejo pošiljati ob 7s.
 
+Simulacijo smo zaključili ob 60s.
 
+Število paketov v čakalnih vrstah posameznega Ethernet vmesnikov na usmerjevalniku skozi čas:
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{queuelength-4.png}
+\end{figure}
+
+\pagebreak
+
+Število paketov, ki so jih obdelali usmerjevalniki:
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{packets-4.png}
+\end{figure}
+
+\pagebreak
 
 \end{document}
 

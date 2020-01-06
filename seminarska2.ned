@@ -159,9 +159,7 @@ network Seminarska1_3
 network Seminarska1_4
 {
     parameters:
-        int c = default(5);
-        int r = default(2);
-        @display("bgb=1107");
+        int n = default(2);
     types:
         channel C extends DatarateChannel
         {
@@ -169,32 +167,24 @@ network Seminarska1_4
             datarate = 10Mbps;
         }
     submodules:
-        router: Router6 {
-            @display("p=293,262");
-        }
-        routers[r]: Router6 {
-            @display("p=571,77");
-        }
-        server: StandardHost6 {
-            @display("p=293,77;i=device/server");
-        }
-        clients[c]: StandardHost6 {
-            @display("p=571,262,col,60");
-        }
         configurator: Ipv6FlatNetworkConfigurator {
-            parameters:
-                @display("p=100,100;is=s");
+            @display("is=s;p=100,100");
+        }
+        rou[n]: Router6 {
+            @display("p=470,100");
+        }
+        cli[n]: StandardHost6 {
+            @display("p=700,100,col,100");
+        }
+        srv[n]: StandardHost6 {
+            @display("p=250,100,col,100");
         }
     connections:
-        server.pppg++ <--> C <--> router.pppg++;
-        server.pppg++ <--> C <--> routers[r-1].pppg++;
-        for i=0..c-1 {
-            clients[i].pppg++ <--> C <--> router.pppg++;
-            clients[i].pppg++ <--> C <--> routers[0].pppg++;
+        for i=0..n-1 {
+            cli[i].ethg++ <--> C <--> rou[i].ethg++;
+            srv[i].ethg++ <--> C <--> rou[i].ethg++;
         }
-        for j=0..r-2 {
-            routers[j].pppg++ <--> C <--> routers[j+1].pppg++;
+        for i=0..n-2 {
+            rou[i].ethg++ <--> C <--> rou[i+1].ethg++;
         }
-
 }
-
