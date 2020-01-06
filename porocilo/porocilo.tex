@@ -504,6 +504,71 @@ Pri večjem številu paketov se časi tudi povečajo.
 
 # TODO: izmeri čas prenosa
 
+\subsection{Omrežje 4}
+V tem omrežju je prikazana različica demonetworketh, kjer je usmerjevalnikov ravno toliko kot strežnikov/odjemalcev. Število "n" le teh se lahko spreminja, ponastavljeno pa je na n=2. Vsi strežniki uporabljajo TCP aplikacijo za prenos vsebin in komunicirajo vsak s svojim odjemalcem. Topologija izgleda kot nekakšen pajek.
+
+Povezave so med vsemi napravami enake in njihova implementacija izgleda tako:
+\begin{lstlisting}
+channel C extends DatarateChannel
+{
+    datarate = 10Mbps;
+    delay = 0.1us;
+}
+\end{lstlisting}
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{omrezje4.png}
+\end{figure}
+
+Za lepšo predstavitev, ker omnetpp usmerjevalnikov noče narisati pravilno še spodnja slika, ki prikazuje omrežje pri paramteru n=2.
+
+\begin{figure}[h]
+  \includegraphics[width=\linewidth]{omrezje4_n_eq_2.png}
+\end{figure}
+
+Program, ki se simulira na n odjemalcih se imenuje "TcpSessionApp". S strežniki sklenejo povezavo preko TCP vrat 1000. Nato pošljejo 10MB podatkov:
+\begin{lstlisting}[h]
+#number of clients, servers; default = 2
+*.n = 5
+
+# tcp apps
+**.cli[*].numApps = 1
+**.cli[*].app[*].typename = "TcpSessionApp"
+**.cli[*].app[0].localAddress = ""
+**.cli[*].app[0].localPort = 1000
+
+#when changing *.n comment or uncomment or add below
+**.cli[0].app[0].connectAddress = "srv[0]"
+**.cli[1].app[0].connectAddress = "srv[1]"
+**.cli[2].app[0].connectAddress = "srv[2]"
+**.cli[3].app[0].connectAddress = "srv[3]"
+**.cli[4].app[0].connectAddress = "srv[4]"
+
+**.cli[*].app[0].connectPort = 1000
+**.cli[*].app[0].tOpen = 5s
+**.cli[*].app[0].tSend = 7s
+**.cli[*].app[0].sendBytes = 10MB
+**.cli[*].app[0].sendScript = ""
+**.cli[*].app[0].tClose = 20s
+
+**.srv[*].numApps = 1
+**.srv[*].app[*].typename = "TcpEchoApp"
+**.srv[*].app[0].localAddress = ""
+**.srv[*].app[0].localPort = 1000
+**.srv[*].app[0].echoFactor = 2.0
+**.srv[*].app[0].echoDelay = 0s
+\end{lstlisting}
+
+Čakalna vrsta na usmerjevalnikih ima kapaciteto 10 ethernet okvirjev. Ob primeru da je polna, zavrže novo prispele okvirje:
+\begin{lstlisting}[h]
+**.eth[*].queue.typename = "EtherQosQueue"
+**.eth[*].queue.dataQueue.typename = "DropTailQueue" # in routers
+**.eth[*].queue.dataQueue.frameCapacity = 10  # in routers
+**.eth[*].mac.duplexMode = true
+\end{lstlisting}
+
+# TODO: izmeri čas prenosa
+
 
 
 \end{document}
